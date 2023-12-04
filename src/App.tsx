@@ -1,13 +1,17 @@
 import { QueryClient, QueryClientProvider } from "react-query";
-import Map from "./components/map";
 import "leaflet/dist/leaflet.css";
+import "./App.css";
+import Map from "./components/Map";
+import MainLayout from "./components/Layout";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Map />
+      <MainLayout>
+        <Map />
+      </MainLayout>
     </QueryClientProvider>
   );
 }

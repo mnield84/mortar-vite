@@ -5,6 +5,9 @@ import redIconUrl from "../assets/red.png";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useQuery } from "react-query";
+import Loading from "./Loading";
+import ErrorMessage from "./ErrorMessage";
+import { fetchGeoInfo } from "../utils/FetchGeoInfo";
 
 interface ICoordinate {
   latitude: number;
@@ -83,35 +86,35 @@ const Map: React.FC = () => {
         const centerLng =
           (Math.max(...longitudes) + Math.min(...longitudes)) / 2;
         setMapCenter([centerLat, centerLng]);
-        setZoomLevel(16); // Adjust zoom level as needed
+        setZoomLevel(16);
       }
     },
     [apiResponse]
   );
 
   const getColorForLatitude = (latitude: number): string => {
-    // Define thresholds for latitude
-    const equatorProximityThreshold = 10; // Degrees from the equator
+    const equatorProximityThreshold = 10;
 
     if (Math.abs(latitude) < equatorProximityThreshold) {
-      return "green"; // Close to equator
+      return "green";
     }
-    return "red"; // Far from equator
+    return "red";
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <Loading />;
   if (error || !apiResponse || !apiResponse.Coords)
-    return <p>An error has occurred</p>;
+    return <ErrorMessage message="An error has occurred" />;
 
   const flatCoordinates = Object.values(apiResponse.Coords).flat();
 
   return (
-    <div>
-      <div>
+    <div className="flex-1 relative w-full h-full">
+      <div className="flex">
         {Object.keys(apiResponse.Coords).map((continent) => (
           <button
             key={continent}
             onClick={() => handleContinentClick(continent)}
+            className="px-4 py-2 bg-slate-900 text-white hover:bg-slate-800"
           >
             {continent}
           </button>
@@ -121,12 +124,13 @@ const Map: React.FC = () => {
         center={mapCenter}
         zoom={zoomLevel}
         style={{ height: "100vh", width: "100%" }}
+        zoomControl={false}
       >
         <ChangeView center={mapCenter} zoom={zoomLevel} />
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {flatCoordinates.map((coord: ICoordinate, index: number) => {
           const color = getColorForLatitude(coord.latitude);
-          const iconUrl = color === "green" ? greenIconUrl : redIconUrl; // Add other conditions as necessary
+          const iconUrl = color === "green" ? greenIconUrl : redIconUrl;
 
           const icon = L.icon({
             iconUrl: iconUrl,
@@ -154,17 +158,3 @@ const Map: React.FC = () => {
 };
 
 export default Map;
-
-const fetchGeoInfo = async (latitude: number, longitude: number) => {
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.address
-      ? `${data.address.road}, ${data.address.city}`
-      : "Not found";
-  } catch (error) {
-    console.error("Error fetching geolocation data:", error);
-    return "Error";
-  }
-};
